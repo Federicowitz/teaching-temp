@@ -1,0 +1,14 @@
+[
+  {
+    "nome": " Luca ",
+    "citta": "Roma",
+    "eta": "18",
+    "corso": "Web"
+  },
+  {
+    "nome": "",
+    "citta": "Milano",
+    "eta": "abc",
+    "corso": "Web"
+  }
+]
