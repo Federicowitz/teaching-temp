@@ -1,0 +1,309 @@
+Meglio spiegarlo a parte e poi sotto ti lascio anche una versione commentata. Hai ragione: per ragazzi che sanno poco di JS, mettere subito Object.keys, map, join, trim e template string tutte insieme è troppo denso.
+
+La versione precedente funziona, ma didatticamente è un po’ compressa.
+
+Prima: cosa fa il codice in generale
+
+Lo script fa questo:
+
+1. Prova a caricare il file dati.csv
+2. Se riesce, legge il contenuto come testo
+3. Se fallisce, usa un CSV scritto direttamente nel JS
+4. Trasforma il testo CSV in un array di oggetti
+5. Prende quell’array e costruisce una tabella HTML
+
+Esempio CSV:
+
+nome,citta,eta,corso
+Luca,Roma,18,Web
+Giulia,Milano,19,Web
+
+Diventa questo array:
+
+[
+  {
+    nome: "Luca",
+    citta: "Roma",
+    eta: "18",
+    corso: "Web"
+  },
+  {
+    nome: "Giulia",
+    citta: "Milano",
+    eta: "19",
+    corso: "Web"
+  }
+]
+
+Questa è la trasformazione importante.
+
+I pezzi difficili
+trim()
+const text = "  Roma  ";
+const cleanText = text.trim();
+
+console.log(cleanText); // "Roma"
+
+trim() rimuove gli spazi all’inizio e alla fine di una stringa.
+
+Serve perché nei CSV potresti avere:
+
+nome, citta, eta
+Luca, Roma, 18
+
+Senza trim(), il nome della colonna non sarebbe "citta", ma " citta" con uno spazio davanti.
+
+E questo crea problemi.
+
+split()
+const line = "Luca,Roma,18,Web";
+
+const values = line.split(",");
+
+console.log(values);
+
+Risultato:
+
+["Luca", "Roma", "18", "Web"]
+
+split(",") taglia una stringa ogni volta che trova una virgola.
+
+Altro esempio:
+
+const csvText = `nome,citta,eta
+Luca,Roma,18`;
+
+const lines = csvText.split("\n");
+
+console.log(lines);
+
+Risultato:
+
+[
+  "nome,citta,eta",
+  "Luca,Roma,18"
+]
+
+split("\n") taglia il testo andando a capo per andare a ottenere le righe.
+
+map()
+
+Questa è una delle parti più importanti.
+
+const numbers = [1, 2, 3];
+
+const doubled = numbers.map(number => number * 2);
+
+console.log(doubled);
+
+Risultato:
+
+[2, 4, 6]
+
+map() prende un array e crea un nuovo array trasformando ogni elemento.
+
+Quindi:
+
+[" nome", " citta", " eta"]
+
+con:
+
+.map(header => header.trim())
+
+diventa:
+
+["nome", "citta", "eta"]
+
+Versione equivalente con for, più comprensibile all’inizio:
+
+const headersSporchi = [" nome", " citta", " eta"];
+const headersPuliti = [];
+
+for (const header of headersSporchi) {
+  headersPuliti.push(header.trim());
+}
+
+console.log(headersPuliti);
+
+Risultato:
+
+["nome", "citta", "eta"]
+
+Quindi questa riga:
+
+const headers = lines[0].split(",").map(header => header.trim());
+
+significa:
+
+1. prendi la prima riga del CSV
+2. dividila usando la virgola
+3. pulisci ogni nome colonna dagli spazi
+4. salva il risultato in headers
+
+Esempio:
+
+const firstLine = "nome, citta, eta";
+
+const headers = firstLine
+  .split(",")
+  .map(header => header.trim());
+
+console.log(headers);
+
+Risultato:
+
+["nome", "citta", "eta"]
+Object.keys()
+
+Se hai un oggetto:
+
+const person = {
+  nome: "Luca",
+  citta: "Roma",
+  eta: "18"
+};
+
+Object.keys(person) restituisce i nomi delle proprietà:
+
+const keys = Object.keys(person);
+
+console.log(keys);
+
+Risultato:
+
+["nome", "citta", "eta"]
+
+Nel nostro codice:
+
+const headers = Object.keys(data[0]);
+
+significa:
+
+prendi il primo oggetto dell'array
+leggi i nomi delle sue proprietà
+usali come intestazioni della tabella
+
+Se data[0] è:
+
+{
+  nome: "Luca",
+  citta: "Roma",
+  eta: "18",
+  corso: "Web"
+}
+
+allora:
+
+Object.keys(data[0])
+
+produce:
+
+["nome", "citta", "eta", "corso"]
+join()
+
+join() prende un array e lo trasforma in una stringa.
+
+const names = ["Luca", "Giulia", "Marco"];
+
+const text = names.join(", ");
+
+console.log(text);
+
+Risultato:
+
+Luca, Giulia, Marco
+
+Altro esempio:
+
+const htmlCells = ["<td>Luca</td>", "<td>Roma</td>", "<td>18</td>"];
+
+const rowHTML = htmlCells.join("");
+
+console.log(rowHTML);
+
+Risultato:
+
+<td>Luca</td><td>Roma</td><td>18</td>
+
+Nel codice si usa perché map() produce un array, ma innerHTML vuole una stringa.
+
+Quindi:
+
+headers.map(header => `<th>${header}</th>`)
+
+produce:
+
+[
+  "<th>nome</th>",
+  "<th>citta</th>",
+  "<th>eta</th>"
+]
+
+Poi:
+
+.join("")
+
+trasforma tutto in:
+
+<th>nome</th><th>citta</th><th>eta</th>
+La parte più complessa: costruire la tabella
+
+Questa riga è troppo compatta:
+
+tableHead.innerHTML = `
+  <tr>
+    ${headers.map(header => `<th>${header}</th>`).join("")}
+  </tr>
+`;
+
+Significa:
+
+per ogni header crea un <th>
+unisci tutti i <th> in una stringa
+mettili dentro una riga <tr>
+metti tutto dentro <thead>
+
+Esempio:
+
+const headers = ["nome", "citta", "eta"];
+
+const thArray = headers.map(header => `<th>${header}</th>`);
+
+console.log(thArray);
+
+Risultato:
+
+[
+  "<th>nome</th>",
+  "<th>citta</th>",
+  "<th>eta</th>"
+]
+
+Poi:
+
+const thString = thArray.join("");
+
+console.log(thString);
+
+Risultato:
+
+<th>nome</th><th>citta</th><th>eta</th>
+
+Infine:
+
+tableHead.innerHTML = `
+  <tr>
+    ${thString}
+  </tr>
+`;
+
+Risultato nella pagina:
+
+<tr>
+  <th>nome</th>
+  <th>citta</th>
+  <th>eta</th>
+</tr>
+Versione più didattica, senza map() e senza join()
+
+Per insegnare, io partirei da questa. È più lunga ma molto più leggibile.
